@@ -1,8 +1,8 @@
 package catalog
 
 import (
+	"lending_service/infrastructure/errors"
 	"lending_service/infrastructure/handlers"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,15 +15,14 @@ func Register(r *gin.Engine, repo catalogRepository) {
 
 func getCategories(repo catalogRepository) gin.HandlerFunc {
 
-	handlerFn := func(c *gin.Context) error {
+	handlerFn := func(c *gin.Context) (interface{}, error) {
 		categories, err := repo.GetCategories()
 		if err != nil {
 
-			return err
+			return nil, err
 		}
 
-		c.JSON(http.StatusOK, categories)
-		return nil
+		return categories, nil
 	}
 
 	return handlers.ResponseHanler(handlerFn)
@@ -31,15 +30,14 @@ func getCategories(repo catalogRepository) gin.HandlerFunc {
 
 func getBooks(repo catalogRepository) gin.HandlerFunc {
 
-	handlerFn := func(c *gin.Context) error {
+	handlerFn := func(c *gin.Context) (interface{}, error) {
 		books, err := repo.GetBooks(c.Param("category"))
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		c.JSON(http.StatusOK, books)
-		return nil
+		return books, nil
 	}
 
 	return handlers.ResponseHanler(handlerFn)
@@ -47,20 +45,18 @@ func getBooks(repo catalogRepository) gin.HandlerFunc {
 
 func getBookDetail(repo catalogRepository) gin.HandlerFunc {
 
-	handlerFn := func(c *gin.Context) error {
+	handlerFn := func(c *gin.Context) (interface{}, error) {
 		book, err := repo.GetBookDetail(c.Param("booksid"))
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if book == nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "book not found"})
-			return nil
+			return nil, errors.NewNotFoundError()
 		}
 
-		c.JSON(http.StatusOK, book)
-		return nil
+		return book, nil
 	}
 
 	return handlers.ResponseHanler(handlerFn)
