@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "env":{
-                "MONGO_URI": "",
+                "MONGO_URI": "mongodb://root:p0o9i8u7@localhost:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false",
             }
         }
     ]

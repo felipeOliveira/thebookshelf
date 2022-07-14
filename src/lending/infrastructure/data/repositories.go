@@ -1,11 +1,9 @@
 package data
 
 import (
-	"context"
 	"lending_service/catalog"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type catalogRepository struct {
@@ -18,14 +16,9 @@ func CreateCatalogRepository(database Database) catalogRepository {
 
 func (r catalogRepository) GetCategories() ([]catalog.Category, error) {
 
-	cur, err := r.database.List("categories", bson.D{{}}, nil)
+	categories := make([]catalog.Category, 0)
+	err := r.database.List("categories", bson.D{{}}, nil, categories)
 
-	if err != nil {
-		return nil, err
-	}
-
-	var categories []catalog.Category
-	err = cur.All(context.Background(), &categories)
 	if err != nil {
 		return nil, err
 	}
@@ -35,20 +28,10 @@ func (r catalogRepository) GetCategories() ([]catalog.Category, error) {
 
 func (r catalogRepository) GetBooks(categoryId string) ([]catalog.Book, error) {
 
-	cur, err := r.database.List("books", bson.D{{"categoryId", categoryId}}, nil)
+	books := make([]catalog.Book, 0)
+	err := r.database.List("books", bson.D{{"categoryId", categoryId}}, nil, &books)
 
 	if err != nil {
-		return nil, err
-	}
-
-	var books []catalog.Book
-	err = cur.All(context.Background(), &books)
-
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return make([]catalog.Book, 0), nil
-		}
-
 		return nil, err
 	}
 
@@ -57,12 +40,10 @@ func (r catalogRepository) GetBooks(categoryId string) ([]catalog.Book, error) {
 
 func (r catalogRepository) GetBookDetail(bookId string) (*catalog.Book, error) {
 
-	var book *catalog.Book
-	if err := r.database.Get("books", bson.D{{"id", bookId}}, nil).
-		Decode(&book); err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, nil
-		}
+	book := &catalog.Book{}
+	err := r.database.Get("books", bson.D{{"id", bookId}}, nil, book)
+
+	if err != nil {
 		return nil, err
 	}
 

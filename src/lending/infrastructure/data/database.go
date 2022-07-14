@@ -11,8 +11,8 @@ import (
 )
 
 type Database interface {
-	List(coll string, filter interface{}, opts *options.FindOptions) (*mongo.Cursor, error)
-	Get(coll string, filter interface{}, opts *options.FindOneOptions) *mongo.SingleResult
+	List(coll string, filter interface{}, opts *options.FindOptions, data interface{}) error
+	Get(coll string, filter interface{}, opts *options.FindOneOptions, data interface{}) error
 	Close() error
 }
 
@@ -45,21 +45,33 @@ func NewDatabase(connectionString string) (Database, error) {
 	}, nil
 }
 
-func (database *appDb) List(coll string, filter interface{}, opts *options.FindOptions) (*mongo.Cursor, error) {
+func (database *appDb) List(coll string, filter interface{}, opts *options.FindOptions, data interface{}) error {
 
 	cur, err := database.db.Collection(coll).Find(context.Background(), filter, opts)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return cur, nil
+	err = cur.All(context.Background(), data)
+
+	if err != nil && err != mongo.ErrNoDocuments {
+		return err
+	}
+
+	return nil
 
 }
 
-func (database *appDb) Get(coll string, filter interface{}, opts *options.FindOneOptions) *mongo.SingleResult {
+func (database *appDb) Get(coll string, filter interface{}, opts *options.FindOneOptions, data interface{}) error {
 
-	return database.db.Collection(coll).FindOne(context.Background(), filter, opts)
+	if err := database.db.Collection(coll).FindOne(context.Background(), filter, opts).
+		Decode(data); err != nil && err != mongo.ErrNoDocuments {
+		return err
+	}
+
+	return nil
+
 }
 
 func (database *appDb) Close() error {
